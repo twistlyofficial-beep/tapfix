@@ -271,11 +271,8 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px}
       <p class="intro" style="margin-bottom:18px">Send us your website. We’ll test it on a phone and email you what we find within 2 business days.</p>
       <p class="privacy">We use your details only to send your results. No newsletter, no sharing, no follow-up calls you didn’t ask for.</p>
     </div>
-    <form action="https://formsubmit.co/twistlyofficial@gmail.com" method="POST">
-      <input type="hidden" name="_subject" value="[Website inquiry] Tap test request">
-      <input type="hidden" name="_next" value="https://twistlyofficial-beep.github.io/tapfix/thanks.html">
-      <input type="hidden" name="_template" value="table">
-      <input type="hidden" name="_autoresponse" value="Thanks for requesting a free TapFix tap test. We'll test your website on a phone and email you the results within 2 business days. Nothing on your site changes without your OK. TapFix, Miami, FL">
+    <form action="https://tapfix-forms.twistlyofficial.workers.dev/inquiry" method="POST" id="tapform">
+      <input type="hidden" name="_t" id="_t" value="">
       <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off" aria-hidden="true">
       <div><label for="n">Your name</label><input id="n" name="Name" required autocomplete="name"></div>
       <div><label for="b">Business name</label><input id="b" name="Business" required autocomplete="organization"></div>
@@ -305,5 +302,6 @@ document.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click
 before.addEventListener("click", () => setFixed(false)); after.addEventListener("click", () => setFixed(true));
 </script>
 <!-- Cloudflare Web Analytics --><script defer type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "1c0d18a3102a4adbae836cb2bca67f39"}'></script><!-- End Cloudflare Web Analytics -->
+<script>document.getElementById("_t").value=String(Date.now());if(/[?&]error=/.test(location.search)){var m=document.createElement("p");m.className="privacy";m.style.color="#D63A2F";m.textContent=/busy/.test(location.search)?"Too many requests from this connection. Please try again in an hour.":"Please check your name, business, website and email, then send again.";document.getElementById("tapform").prepend(m);}</script>
 </body>
 </html>
