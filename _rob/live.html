@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rich or Broke · Live scoreboard</title><meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d1430;--panel:#16204a;--edge:#2c3a7a;--ink:#eef2ff;--dim:#93a0d6;--gold:#ffc83d;--xp:#37e07a;--red:#ff5a5f;--sky:#5ac8ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Atkinson Hyperlegible",system-ui,sans-serif;
+background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:24px 24px}
+.px{font-family:"Press Start 2P",monospace;letter-spacing:.02em}
+main{max-width:1040px;margin:0 auto;padding:20px 16px 48px}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px}
+h1{font-size:18px;margin:0;line-height:1.5}h1 b{color:var(--gold)}
+.live{display:flex;gap:10px;align-items:center;color:var(--dim);font-size:13px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--xp);box-shadow:0 0 10px var(--xp);animation:p 1.6s infinite}
+.dot.off{background:var(--red);box-shadow:0 0 10px var(--red)}@keyframes p{50%{opacity:.35}}
+.panel{background:var(--panel);border:3px solid var(--edge);border-radius:6px;padding:16px;box-shadow:0 6px 0 #070b1d}
+.quest{margin-bottom:16px}.quest h2{font-size:12px;margin:0 0 14px;color:var(--gold)}
+.big{font-size:42px;color:var(--gold);line-height:1}.big small{font-size:14px;color:var(--dim)}
+.bar{position:relative;height:26px;background:#0a1028;border:3px solid #3b4a92;border-radius:4px;overflow:hidden;margin:8px 0 4px}
+.fill{height:100%;background:repeating-linear-gradient(90deg,var(--xp) 0 14px,#2bc566 14px 16px);width:0;transition:width 1.2s steps(20)}
+.fill.gold{background:repeating-linear-gradient(90deg,var(--gold) 0 14px,#e2ab22 14px 16px)}
+.bar span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;text-shadow:2px 2px 0 #000}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.stat .k{font-size:9px;color:var(--dim)}.stat .v{font-size:20px;margin-top:8px}.stat .d{font-size:13px;color:var(--xp);margin-top:6px}
+.stat .d.zero{color:var(--dim)}
+.two{display:grid;grid-template-columns:1.3fr 1fr;gap:16px}@media(max-width:760px){.two{grid-template-columns:1fr}.big{font-size:30px}}
+.sec{font-size:10px;color:var(--sky);margin:0 0 12px}
+svg{width:100%;height:auto;display:block}
+ol{list-style:none;margin:0;padding:0}li{margin-bottom:12px}
+li .t{font-size:14px;display:flex;justify-content:space-between;gap:8px}li .t b{color:var(--gold);white-space:nowrap}
+li .m{height:10px;background:#0a1028;border:2px solid #3b4a92;margin-top:4px}li .m i{display:block;height:100%;background:var(--sky)}
+.note{color:var(--dim);font-size:13px;margin-top:18px}
+.lvl{display:inline-block;font-size:10px;background:var(--gold);color:#1a1300;padding:6px 8px;border-radius:3px;margin-left:8px;vertical-align:middle}
+.empty{padding:40px;text-align:center;color:var(--dim)}
+</style></head><body><main>
+<header><h1 class="px">RICH OR BROKE<br><b>HQ SCOREBOARD</b></h1>
+<div class="live"><span class="dot" id="dot"></span><span id="sync">Connecting…</span></div></header>
+
+<section class="panel quest"><h2 class="px">MONETIZATION QUEST <span class="lvl px" id="lvl">LV 1</span></h2>
+<div class="big px" id="pct">0%<small> to YouTube Partner Program</small></div>
+<div style="margin-top:16px"><div class="px" style="font-size:10px">SUBSCRIBERS</div>
+<div class="bar"><div class="fill gold" id="subsbar"></div><span class="px" id="substxt">0 / 1,000</span></div></div>
+<div style="margin-top:12px"><div class="px" style="font-size:10px">SHORTS VIEWS · LAST 90 DAYS</div>
+<div class="bar"><div class="fill" id="viewsbar"></div><span class="px" id="viewstxt">0 / 10,000,000</span></div></div>
+<div class="note" id="need"></div></section>
+
+<div class="row" id="stats"></div>
+
+<div class="two">
+<section class="panel"><h3 class="sec px">VIEWS OVER TIME</h3><div id="chart"><div class="empty">Waiting for data…</div></div></section>
+<section class="panel"><h3 class="sec px">VIDEO LEADERBOARD</h3><ol id="board"><li class="empty">Waiting for data…</li></ol></section>
+</div>
+<p class="note">Real numbers from the YouTube Data API, sent by the channel's GitHub worker every 2 hours and right after each new post. This page checks for new numbers every 60 seconds. "Today" counts from the first update after midnight Eastern. Shorts views for the quest use the channel's total views, which equals the last 90 days while the channel is younger than 90 days. YouTube counts only "qualified" views, so its own number can be lower.</p>
+</main>
+<script>
+var fmt=function(n){return n==null?"—":Number(n).toLocaleString("en-US")};
+var LV=[0,1e3,1e4,1e5,1e6,1e7];
+function el(id){return document.getElementById(id)}
+function card(k,v,d){var c=document.createElement("div");c.className="panel stat";
+ c.innerHTML='<div class="k px"></div><div class="v px"></div><div class="d"></div>';
+ c.children[0].textContent=k;c.children[1].textContent=fmt(v);
+ c.children[2].textContent=d==null?"today: —":(d>0?"+"+fmt(d)+" today":"+0 today");if(!d)c.children[2].className="d zero";return c}
+function chart(h){if(!h||h.length<2){el("chart").innerHTML='<div class="empty">The chart starts after two updates.</div>';return}
+ var W=600,H=220,P=34,max=Math.max.apply(null,h.map(function(p){return p.views}))||1,t0=h[0].t,t1=h[h.length-1].t||t0+1;
+ var x=function(t){return P+(W-P*1.3)*((t-t0)/((t1-t0)||1))},y=function(v){return H-P-(H-P*1.6)*(v/max)};
+ var d="M"+x(h[0].t)+" "+y(h[0].views);for(var i=1;i<h.length;i++){d+=" H"+x(h[i].t)+" V"+y(h[i].views)}
+ var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Total views over time">';
+ for(var g=0;g<=4;g++){var gy=y(max*g/4);s+='<line x1="'+P+'" x2="'+(W-8)+'" y1="'+gy+'" y2="'+gy+'" stroke="#2c3a7a" stroke-dasharray="4 4"/><text x="'+(P-6)+'" y="'+(gy+4)+'" fill="#93a0d6" font-size="11" text-anchor="end">'+(max*g/4>=1000?Math.round(max*g/400)/10+"k":Math.round(max*g/4))+'</text>'}
+ s+='<path d="'+d+'" fill="none" stroke="#ffc83d" stroke-width="4" stroke-linejoin="miter"/>';
+ var l=h[h.length-1];s+='<rect x="'+(x(l.t)-5)+'" y="'+(y(l.views)-5)+'" width="10" height="10" fill="#37e07a"/></svg>';
+ el("chart").innerHTML=s}
+function board(v){v=(v||[]).slice().sort(function(a,b){return b.views-a.views});var top=v[0]?v[0].views||1:1,o=el("board");o.innerHTML="";
+ if(!v.length){o.innerHTML='<li class="empty">No videos yet.</li>';return}
+ v.slice(0,10).forEach(function(x,i){var li=document.createElement("li");li.innerHTML='<div class="t"><span></span><b></b></div><div class="m"><i></i></div>';
+  li.querySelector("span").textContent=(i+1)+". "+x.title;li.querySelector("b").textContent=fmt(x.views)+" views · "+fmt(x.likes)+" ♥ · "+fmt(x.comments)+" 💬";
+  li.querySelector("i").style.width=Math.max(2,100*x.views/top)+"%";o.appendChild(li)})}
+function render(d){var L=d.latest;if(!L){el("sync").textContent="Waiting for the first update from YouTube";el("dot").className="dot off";return}
+ var T=L.totals,B=d.today||T,subs=T.subs,views=T.views;
+ var ps=subs==null?0:Math.min(100,subs/10),pv=Math.min(100,views/1e5),pct=Math.min(ps,pv);
+ el("pct").firstChild.nodeValue=(pct<1?pct.toFixed(2):Math.floor(pct))+"%";
+ el("subsbar").style.width=ps+"%";el("viewsbar").style.width=pv+"%";
+ el("substxt").textContent=(subs==null?"hidden":fmt(subs))+" / 1,000 · "+ps.toFixed(1)+"%";el("viewstxt").textContent=fmt(views)+" / 10,000,000 · "+pv.toFixed(2)+"%";
+ var lv=1;LV.forEach(function(t,i){if(views>=t)lv=i+1});el("lvl").textContent="LV "+lv;
+ el("need").textContent="Still needed: "+(subs==null?"subscriber count hidden":fmt(Math.max(0,1000-subs))+" subscribers")+" and "+fmt(Math.max(0,1e7-views))+" Shorts views. Both are required.";
+ var st=el("stats");st.innerHTML="";
+ [["VIEWS",views,views-B.views],["SUBSCRIBERS",subs,subs==null||B.subs==null?null:subs-B.subs],["LIKES",T.likes,T.likes-B.likes],["COMMENTS",T.comments,T.comments-B.comments],["VIDEOS",T.videos,T.videos-B.videos]].forEach(function(a){st.appendChild(card(a[0],a[1],a[2]))});
+ chart(d.history);board(L.videos);
+ var age=Math.round((Date.now()-L.t)/60000);el("sync").textContent="Updated from YouTube "+(age<1?"just now":age<120?age+" min ago":Math.round(age/60)+" h ago")+" · checking every 60 s";
+ el("dot").className=age>240?"dot off":"dot"}
+function load(){fetch("/yt",{cache:"no-store"}).then(function(r){return r.json()}).then(render).catch(function(){el("sync").textContent="Can't reach the scoreboard, retrying…";el("dot").className="dot off"})}
+load();setInterval(load,60000);
+</script></body></html>
